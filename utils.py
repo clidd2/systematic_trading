@@ -1,5 +1,6 @@
 import pandas_datareader.data as web
 import datetime as dt
+import pandas as pd
 
 def get_data(ticker, start_date, end_date=dt.datetime.today(), colname='Adj Close'):
     try:

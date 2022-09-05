@@ -13,7 +13,12 @@ def breakout(df, st=50, lt=200):
 
     #eventually this could be better with using position size. 1 = 100% long, -1 = 100% short.
     #L/S parameters are vague right now, will use a position optimization function apply for time series levels
-    df['signal'] = np.where(df['{}_dma'.format(st)] > df['{}_dma'.format(lt)], 1, -1)
+    df['signal_long'] = np.where(df['{}_dma'.format(st)] > df['{}_dma'.format(lt)], 1, 0)
+    df['signal_short'] = np.where(df['{}_dma'.format(st)] < df['{}_dma'.format(lt)], -1, 0)
+    conditions = [(df['signal_long'] == 1), (df['signal_short'] == -1), (df['signal_long'] == 0) & (df['signal_short'] == 0)]
+    values = [1, -1, 0]
+    df['signal'] = np.select(conditions, values)
+
     return df.dropna()
 
 
@@ -34,9 +39,9 @@ def plot_breakout(df, st, lt):
     plt.show()
 
 
-def strategy_implement(df, func):
-    short_window = 25
-    long_window = 100
+def strategy_implement(df, func, params=[]):
+    short_window = 10
+    long_window = 30
     strategy = func(df=df, st=short_window, lt=long_window)
 
     # strategy['daily_returns'] = strategy['Close/Last'].pct_change()
@@ -61,7 +66,7 @@ def main():
 
 
     implemented = strategy_implement(df, breakout)
-
+    print(implemented)
 
 if __name__ == '__main__':
     main()
