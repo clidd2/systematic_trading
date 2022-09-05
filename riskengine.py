@@ -82,7 +82,7 @@ class RiskEngine(object):
 
 
     def set_max_exposure(self, exposure):
-        self.__max_exposure = max_exposure
+        self.__max_exposure = exposure
 
     #TODO: need to add some more setters and organize neatly
 
@@ -133,7 +133,7 @@ class RiskEngine(object):
 
     def vol_targeting(self, target=0.25):
         annual_cash_vol = target * self.get_notional()
-        daily_vol_target =
+
 
         market_data = self.get_data()
         markets = self.get_markets()
