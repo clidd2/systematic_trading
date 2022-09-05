@@ -3,7 +3,6 @@ import pandas as pd
 import datetime as dt
 import pandas_datareader.data as web
 
-
 def get_data(ticker, start_date, end_date=dt.datetime.today(), colname='Adj Close'):
     try:
         #frame containing price data for given security in given date range
@@ -48,7 +47,7 @@ class RiskEngine(object):
 
     def __init__(self, notional_amount=100_000_000, max_notional=100_000_000,
                 max_exposure=1,
-                traded_markets=['CL=F','ES=F','CC=F','ZC=F','SB=F'],
+                traded_markets=['CL=F','ES=F','CC=F','ZC=F','SB=F','NG=F'],
                 end=dt.date.today(), lookback=200):
 
         self.__notional = notional_amount
@@ -146,9 +145,30 @@ class RiskEngine(object):
         return shares
 
 
+    def vol_targeting(self, target=0.25):
+        annual_cash_vol = target * self.get_notional()
+        daily_vol_target =
+
+        market_data = self.get_data()
+        markets = self.get_markets()
+
+        #set up some dictionaries from which to set keep track of data
+        allocation_atrs = dict()
+        close_price = dict()
+
+        #notional is full portfolio, max size is max tranche size as decimal
+        allocation = self.get_notional() * self.get_max_size()
+
+        #initial full exposure set at 0 - used to scale position size
+        contract_exposure = 0
+        for df, market in zip(market_data, markets):
+            pass
+
+
 def main():
     engine = RiskEngine()
     shares = engine.atr_parity(lookback_period=20)
+    print(shares)
 
     #portfolio tranche size to allocate positions within
     port_tranche = engine.get_max_size() * engine.get_notional()
