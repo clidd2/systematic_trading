@@ -165,7 +165,7 @@ class RiskEngine(object):
             #find scaled exposure to each security
             close = close_price[market]
             scaled = (allocation_atrs[market] * close) * scaler
-            num_shares = scaled / close
+            num_shares = round(scaled / close,0)
             shares[market] = (num_shares, close)
 
         return shares
@@ -213,8 +213,8 @@ def main():
     for ticker, (num_shares, closing_price) in shares.items():
         market_value = num_shares*closing_price
         percent_tranche = market_value/port_tranche
-        print(f'TICKER: {ticker}, SHARES: {num_shares}')
-        print(f'MARKET VALUE: {market_value}, PERCENT OF PORTFOLIO TRANCHE: {percent_tranche:.2%}')
+        print(f'TICKER: {ticker}, SHARES: {num_shares:,}')
+        print(f'MARKET VALUE: ${market_value:,.2f}, PERCENT OF PORTFOLIO TRANCHE: {percent_tranche:.2%}')
 
 
 if __name__ == '__main__':
