@@ -1,11 +1,9 @@
 import pandas as pd
-import numpy as np
-import os
 import datetime as dt
 from dateutil.relativedelta import relativedelta
-from utils import get_data
+from utils import get_data, ewma_vectorized
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 def breakout(df, st=50, lt=200):
     df['{}_dma'.format(st)] = df[r'price'].rolling(st).mean()
@@ -20,6 +18,17 @@ def breakout(df, st=50, lt=200):
     df['signal'] = np.select(conditions, values)
 
     return df.dropna()
+
+
+def macd(ser, a=12, b=26, c=9):
+    macd_line = ewma_vectorized(ser, a) - ewma_vectorized(ser, b)
+    return ewma_vectorized(macd_line, c)
+
+
+def macd_strat(df):
+    df['signal'] = macd(df['price'])
+    print(df['signal'])
+
 
 
 def dollar_value(df, initial_amount=100):
@@ -63,10 +72,10 @@ def main():
     rebals = [dt.date(year=dt.date.today().year,month=3,day=31),dt.date(year=dt.date.today().year, month=6, day=30),
               dt.date(year=dt.date.today().year, month=9, day=30), dt.date(year=dt.date.today().year, month=12, day=31)]
 
+    macd_strat(df)
 
-
-    implemented = strategy_implement(df, breakout)
-    print(implemented)
+    breakout_implemented = strategy_implement(df, breakout)
+    print(breakout_implemented)
 
 if __name__ == '__main__':
     main()
