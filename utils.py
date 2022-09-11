@@ -29,7 +29,7 @@ def ewma_vectorized(ser, window):
     scale_arr = scale ** r
     offset = ser[0] * alpha_rev ** (r + 1)
     pw0 = alpha * alpha_rev ** (n - 1)
-
+    print(pw0)
 
     mult = ser * pw0 * scale_arr
     cumsums = mult.cumsum()
