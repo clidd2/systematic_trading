@@ -25,14 +25,44 @@ def macd(df, a=12, b=26, c=9):
     df[f'ewm_{a}'] = df['price'].ewm(span=a).mean()
     df[f'ewm_{b}'] = df['price'].ewm(span=b).mean()
     df['macd_line'] = df[f'ewm_{a}'] - df[f'ewm_{b}']
-    print(df['macd_line'])
     return df['macd_line'].ewm(span=c).mean()
 
 
 def macd_strat(df):
-    print(df.columns)
+    '''
+    macd strategy in which acceleration/deceleration of divergence is captured in trades
+    params
+    ======
+    df (pd.Dataframe): time-series price data for individual security
+
+    return
+    ======
+    pandas dataframe containing all incoming price data as well as signals generated from macd implementation
+    '''
+
     df['macd'] = macd(df)
-    df['signal'] = np.where(df['macd'] > 0, 1, -1)
+
+    ###########################################
+    # looking for rate of change of macd here #
+    ###########################################
+
+    # 1) positive acceleration of macd while above zero macd ==> buy
+    # 2) negative acceleration of macd while negative ==> short
+    # 3) average negative acceleration of macd for 5 trading days while positive ==> flat
+    # 2) average positive acceleration of macd for 5 trading days while negative ==> flat
+    #TODO: scaling into and out of positions is important. relative strength of signal?
+
+    df['macd_roll'] = df['macd'].pct_change(periods=5, axis=0)
+    #print(df['macd_roll'].dropna())
+    df['signal_long'] = np.where(((df['macd_roll'] >= 0) & (df['macd'] >= 0)), 1, 0)
+    print(df['signal_long'])
+    df['signal_short'] = np.where((df['macd_roll'] < 0) & (df['macd'] < 0), 1, 0)
+    df['signal_flat'] = np.where(((df['macd_roll'] >= 0) & (df['macd'] < 0)) | ((df['macd_roll'] < 0) & (df['macd'] >= 0)), 1, 0)
+
+    conditions = [(df['signal_long'] == 1), (df['signal_short'] == 1), (df['signal_flat'] == 1)]
+    values = [1, -1, 0]
+
+    df['signal'] = np.select(conditions, values)
 
     return df.dropna()
 
