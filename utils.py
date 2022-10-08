@@ -3,7 +3,12 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 
-def get_data(ticker, start_date, end_date=dt.datetime.today(), colname='Adj Close'):
+def get_data(ticker, start_date, end_date=dt.datetime.today(),
+            colname='Adj Close'):
+    '''
+
+    '''
+    
     try:
         #frame containing price data for given security in given date range
         df = web.DataReader(name=ticker,data_source='yahoo',start=start_date,

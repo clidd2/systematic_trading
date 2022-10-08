@@ -50,15 +50,17 @@ class RiskEngine(object):
 
     params
     ======
-    notional_amount (float): notional amount of portfolio to allocate into - will change as markets move
+    notional_amount (float): notional amount of portfolio to allocate into -
+                            will change as markets move
     max_notional (float): used to constrain/scale assets within portfolio
     max_exposure (float): max gross exposure to markets allowed
     traded_markets (list): list of tickers for desired assets
-    end_date (datetime.date): datetime object representing end date for strategy testing
+    end_date (datetime.date): datetime object representing end date for strategy
+                            testing
     lookback (int): lookback period from which to derive allocation/sizing
     '''
-    def __init__(self, notional_amount=100_000_000.00, max_notional=100_000_000.00,
-                max_exposure=1.0,
+    def __init__(self, notional_amount=100_000_000.00,
+                max_notional=100_000_000.00, max_exposure=1.0,
                 traded_markets=['CL=F','ES=F','CC=F','ZC=F','SB=F','NG=F'],
                 end=dt.date.today(), lookback=200):
 
@@ -122,7 +124,8 @@ class RiskEngine(object):
 
         params
         ======
-        lookback_period (int): lookback period from which to to calculate atr position sizing
+        lookback_period (int): lookback period from which to to calculate atr
+        position sizing
 
         return
         ======
