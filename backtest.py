@@ -10,11 +10,17 @@ def breakout(df, st=50, lt=200):
     df['{}_dma'.format(st)] = df[r'price'].rolling(st).mean()
     df['{}_dma'.format(lt)] = df[r'price'].rolling(lt).mean()
 
-    #eventually this could be better with using position size. 1 = 100% long, -1 = 100% short.
-    #L/S parameters are vague right now, will use a position optimization function apply for time series levels
-    df['signal_long'] = np.where(df['{}_dma'.format(st)] > df['{}_dma'.format(lt)], 1, 0)
-    df['signal_short'] = np.where(df['{}_dma'.format(st)] < df['{}_dma'.format(lt)], -1, 0)
-    conditions = [(df['signal_long'] == 1), (df['signal_short'] == -1), (df['signal_long'] == 0) & (df['signal_short'] == 0)]
+    #eventually this could be better with using position size. 1 = 100% long,
+    #-1 = 100% short. L/S parameters are vague right now, will use a position
+    #optimization function apply for time series levels
+    df['signal_long'] = np.where(df['{}_dma'.format(st)] > \
+                                df['{}_dma'.format(lt)], 1, 0)
+    df['signal_short'] = np.where(df['{}_dma'.format(st)] < \
+                                df['{}_dma'.format(lt)], -1, 0)
+
+    conditions = [(df['signal_long'] == 1), (df['signal_short'] == -1), \
+                    (df['signal_long'] == 0) & (df['signal_short'] == 0)]
+
     values = [1, -1, 0]
     df['signal'] = np.select(conditions, values)
 
@@ -30,14 +36,17 @@ def macd(df, a=12, b=26, c=9):
 
 def macd_strat(df):
     '''
-    macd strategy in which acceleration/deceleration of divergence is captured in trades
+    macd strategy in which acceleration/deceleration of divergence is captured
+    in trades
+
     params
     ======
     df (pd.Dataframe): time-series price data for individual security
 
     return
     ======
-    pandas dataframe containing all incoming price data as well as signals generated from macd implementation
+    pandas dataframe containing all incoming price data as well as signals
+    generated from macd implementation
     '''
 
     df['macd'] = macd(df)
@@ -54,12 +63,15 @@ def macd_strat(df):
 
     df['macd_roll'] = df['macd'].pct_change(periods=5, axis=0)
     #print(df['macd_roll'].dropna())
-    df['signal_long'] = np.where(((df['macd_roll'] >= 0) & (df['macd'] >= 0)), 1, 0)
+    df['signal_long'] = np.where(((df['macd_roll'] >= 0) & \
+                                (df['macd'] >= 0)), 1, 0)
     print(df['signal_long'])
     df['signal_short'] = np.where((df['macd_roll'] < 0) & (df['macd'] < 0), 1, 0)
-    df['signal_flat'] = np.where(((df['macd_roll'] >= 0) & (df['macd'] < 0)) | ((df['macd_roll'] < 0) & (df['macd'] >= 0)), 1, 0)
+    df['signal_flat'] = np.where(((df['macd_roll'] >= 0) & (df['macd'] < 0)) | \
+                            ((df['macd_roll'] < 0) & (df['macd'] >= 0)), 1, 0)
 
-    conditions = [(df['signal_long'] == 1), (df['signal_short'] == 1), (df['signal_flat'] == 1)]
+    conditions = [(df['signal_long'] == 1), (df['signal_short'] == 1), \
+                    (df['signal_flat'] == 1)]
     values = [1, -1, 0]
 
     df['signal'] = np.select(conditions, values)
@@ -98,7 +110,8 @@ def implement_macd(df, func):
     # strategy['daily_returns'] = strategy['Close/Last'].pct_change()
     strategy['daily_returns'] = strategy['price'].apply(np.log).diff(1)
     dollar_total = dollar_value(strategy)
-    full_frame = pd.concat([strategy, dollar_total.rename('cumulative_value')], axis=1)
+    full_frame = pd.concat([strategy, dollar_total.rename('cumulative_value')], \
+                                                        axis=1)
     plot_macd(full_frame)
     return full_frame
 
@@ -110,7 +123,8 @@ def implement_breakout(df, func, params=[]):
     # strategy['daily_returns'] = strategy['Close/Last'].pct_change()
     strategy['daily_returns'] = strategy['price'].apply(np.log).diff(1)
     dollar_total = dollar_value(strategy)
-    full_frame = pd.concat([strategy, dollar_total.rename('cumulative_value')], axis=1)
+    full_frame = pd.concat([strategy, dollar_total.rename('cumulative_value')], \
+                            axis=1)
     plot_breakout(full_frame, st=short_window, lt=long_window)
     return full_frame
 
@@ -122,9 +136,12 @@ def main():
     df = get_data('SPY', start_date, end_date, 'Adj Close')
     df.set_index('Date', inplace=True)
 
-    #TODO: need to find a way to implement these out of current year, may be able to parse years and just pass these as parameters
-    rebals = [dt.date(year=dt.date.today().year,month=3,day=31),dt.date(year=dt.date.today().year, month=6, day=30),
-              dt.date(year=dt.date.today().year, month=9, day=30), dt.date(year=dt.date.today().year, month=12, day=31)]
+    #TODO: need to find a way to implement these out of current year, may be
+    #able to parse years and just pass these as parameters
+    rebals = [dt.date(year=dt.date.today().year,month=3,day=31),
+            dt.date(year=dt.date.today().year, month=6, day=30),
+            dt.date(year=dt.date.today().year, month=9, day=30),
+            dt.date(year=dt.date.today().year, month=12, day=31)]
 
     macd_df = macd_strat(df)
     macd_stats = implement_macd(macd_df, macd_strat)
