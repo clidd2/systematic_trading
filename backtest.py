@@ -5,7 +5,6 @@ from utils import get_data
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-from strategies import awesome_oscillator_strategy
 
 def dollar_value(df, initial_amount=100):
     return (df['signal'].shift(1) * df['daily_returns']).cumsum().apply(np.exp)

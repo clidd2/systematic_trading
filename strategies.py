@@ -1,10 +1,42 @@
 import pandas as pd
 import datetime as dt
 from dateutil.relativedelta import relativedelta
+from backtest import dollar_value
 from utils import get_data
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+
+
+
+class BaseStrategy:
+
+    def __init__(self, dfs = []):
+        self._dfs = dfs
+        self._strategy_frames = []
+
+    #generic getters
+    def get_dfs(self) -> list:
+        return self._dfs
+
+    def get_strategy_frames(self) -> list:
+        return self._strategy_frames
+
+    #generic setters
+    def set_dfs(self, dfs: list):
+        self._dfs = dfs
+
+    def set_strategy_frames(self, dfs: list):
+        self._strategy_frames = dfs
+
+    def run_strategy(self, *args, **kwargs):
+        return self
+
+    def plot_strategy(self, *args, **kwargs):
+        return self
+
+
+
 
 def breakout(df, st=50, lt=200):
     df['{}_dma'.format(st)] = df[r'price'].rolling(st).mean()
@@ -101,84 +133,146 @@ def plot_breakout(df, st, lt):
     plt.show()
 
 
-def generate_awesome_oscillator(df, window):
-    '''
-    Implementation of awesome oscillator for trend breakout/reversal
 
-    params
-    ======
-    df (pd.DataFrame): pandas dataframe with pricing data for security
-    window (int): lookback window to create
-
-    returns
-    =======
-    pandas dataframe containing dataframe with oscillator values
-    '''
-    df['med'] = (df['High'] + df['Low']) / 2
-    df[f'awesome_oscillator_{window}_window'] = df['med'].rolling(5).mean() - \
-                                                df['med'].rolling(window).mean()
-    return df
-
-def awesome_oscillator_strategy(df, windows=[]):
-    '''
-    interpret and generate signals based on awesome oscillator
-
-    Economic rationale is below:
-    1) if awesome oscillator is positive and gradient is positive, buy.
-    2) if oscillator negative  and gradient negative, sell.
-    3) if oscillator positive but gradient negative, scale out.
-    4) if oscillator is negative but gradient is positive, scale in.
-
-    need to think more about 3) and 4). will likely think about this a bit more
-    and implement later down the line.
-
-    params
-    ======
-    df (pd.DataFrame): pandas dataframe with pricing data for security
-    window (int): list of lookback windows from which to generate signals
-
-    returns
-    =======
-    buy/sell signal expressed as a decimal
-    '''
-
-    #generate awesome oscillator series' based on windows
-    for window in windows:
-        df = generate_awesome_oscillator(df, window)
-
-    #find columns independent of the windows used
-    oscillator_cols = [col for col in df.columns if 'awesome_oscillator' in col]
-
-    #find if oscillator value is higher or lower than previous
-    for col in oscillator_cols:
-        df[f'gradient_{col}'] = df[col] - df[col].shift(1)
-
-    #find gradient columns independent of windows used
-    gradient_cols = [col for col in df.columns if 'gradient' in col]
-
-    #drop na values for sake of stopping errors
+class AwesomeOscillator(BaseStrategy):
 
 
-    #find averages over oscillator and gradient average values over earch window
-    df['avg_oscillator'] = df[oscillator_cols].apply(lambda x: x.mean(), axis=1)
-    df['avg_gradient'] = df[gradient_cols].apply(lambda x: x.mean(), axis=1).rolling(5).mean()
+    def __init__(self, dfs: list, windows: list):
+        super().__init__(dfs)
+        self._windows = windows
 
-    df.dropna(inplace=True)
-
-    #generate signal based on the economic rationale explained above
-    df['signal_long'] = np.where((df['avg_oscillator'] > 0) & \
-                                (df['avg_gradient'] > 0), 1, 0)
-
-    df['signal_short'] = np.where((df['avg_oscillator'] < 0) & \
-                                (df['avg_gradient'] < 0), -1, 0)
+    #getters
+    def get_windows(self) -> list:
+        return self._windows
 
 
-    conditions = [(df['signal_long'] == 1), (df['signal_short'] == -1)]
-    values = [1, -1]
+    #setters
+    def set_windows(self, windows: list):
+        self._windows = windows
 
-    df['signal'] = np.zeros(len(df['signal_long']))
-    df['signal'] = np.select(conditions, values)
-    return df
+
+
+
+    def generate_awesome_oscillator(self, df, window):
+        '''
+        Implementation of awesome oscillator for trend breakout/reversal
+
+        params
+        ======
+        df (pd.DataFrame): pandas dataframe with pricing data for security
+        window (int): lookback window to create
+
+        returns
+        =======
+        pandas dataframe containing dataframe with oscillator values
+        '''
+        df['med'] = (df['High'] + df['Low']) / 2
+        df[f'awesome_oscillator_{window}_window'] = df['med'].rolling(5).mean()\
+                                            - df['med'].rolling(window).mean()
+
+        return df
+
+
+    def awesome_oscillator_strategy(self, df, windows=[]):
+        '''
+        interpret and generate signals based on awesome oscillator
+
+        Economic rationale is below:
+        1) if awesome oscillator is positive and gradient is positive, buy.
+        2) if oscillator negative  and gradient negative, sell.
+        3) if oscillator positive but gradient negative, scale out.
+        4) if oscillator is negative but gradient is positive, scale in.
+
+        need to think more about 3) and 4). will likely think about this a bit
+        more and implement later down the line.
+
+        params
+        ======
+        df (pd.DataFrame): pandas dataframe with pricing data for security
+        window (int): list of lookback windows from which to generate signals
+
+        returns
+        =======
+        buy/sell signal expressed as a decimal
+        '''
+
+        #generate awesome oscillator series' based on windows
+        for window in windows:
+            df = self.generate_awesome_oscillator(df, window)
+
+        #find columns independent of the windows used
+        oscillator_cols = [col for col in df.columns if 'awesome_oscillator' \
+                            in col]
+
+        #find if oscillator value is higher or lower than previous
+        for col in oscillator_cols:
+            df[f'gradient_{col}'] = df[col] - df[col].shift(1)
+
+        #find gradient columns independent of windows used
+        gradient_cols = [col for col in df.columns if 'gradient' in col]
+
+        #drop na values for sake of stopping errors
+
+
+        #find averages over oscillator and gradient average values over earch window
+        df['avg_oscillator'] = df[oscillator_cols].apply(lambda x: x.mean(), axis=1)
+        df['avg_gradient'] = df[gradient_cols].apply(lambda x: x.mean(), \
+                                axis=1).rolling(5).mean()
+
+        df.dropna(inplace=True)
+
+        #generate signal based on the economic rationale explained above
+        df['signal_long'] = np.where((df['avg_oscillator'] > 0) & \
+                                    (df['avg_gradient'] > 0), 0, 1)
+
+        df['signal_short'] = np.where((df['avg_oscillator'] < 0) & \
+                                    (df['avg_gradient'] < 0), 0, 1)
+
+
+        conditions = [(df['signal_long'] == 1), (df['signal_short'] == 1)]
+        values = [1, -1]
+
+        df['signal'] = np.zeros(len(df['signal_long']))
+        df['signal'] = np.select(conditions, values)
+        return df
+
+
+    def run_strategy(self):
+        ret = []
+        for df in self.get_dfs():
+            strategy = self.awesome_oscillator_strategy(df, self.get_windows())
+
+            strategy['daily_returns'] = strategy['price'].apply(np.log).diff(1)
+            dollar_total = dollar_value(strategy)
+            full_frame = pd.concat([strategy, dollar_total.rename('cumulative_value')\
+                                    ],axis=1)
+            print(full_frame)
+            ret.append(full_frame)
+
+        self.set_strategy_frames(ret)
+
+
+
+    def plot_strategy(self):
+
+        if len(self.get_dfs()) == 1:
+            df = self.get_dfs()[0]
+
+        else:
+            pass
+
+        print(df)
+        buy_and_hold = df['price'].apply(np.log).diff(1).cumsum().apply(np.exp)
+        sns.set()
+        fig, ax = plt.subplots(3,1)
+        df['cumulative_value'].plot(ax=ax[0], title='Strategy Returns')
+        buy_and_hold.plot(ax=ax[1], title='Buy and Hold')
+        df['signal'].plot(ax=ax[2], title='Long/Short')
+        plt.show()
+
+
+
+
 
 def main():
 
@@ -197,9 +291,10 @@ def main():
     #macd_df = macd_strat(df)
     #macd_stats = implement_macd(macd_df, macd_strat)
     #print(macd_stats)
-    windows = [34, 50, 68]
-    awesome_oscillator_strategy(df, windows)
-
+    windows = [15, 25, 45]
+    awesome = AwesomeOscillator(dfs=[df], windows=windows)
+    awesome.run_strategy()
+    awesome.plot_strategy()
 
 if __name__ == '__main__':
     main()
