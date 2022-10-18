@@ -11,9 +11,10 @@ import numpy as np
 
 class BaseStrategy:
 
-    def __init__(self, dfs = []):
+    def __init__(self, dfs = [], stop_loss = False):
         self._dfs = dfs
         self._strategy_frames = []
+        self._stop_loss = stop_loss
 
     #generic getters
     def get_dfs(self) -> list:
@@ -36,6 +37,32 @@ class BaseStrategy:
         return self
 
 
+    #generic utility functions
+    def set_stop(self, initial_set = 0.05, trailing_risk=0.10):
+        '''
+        thinking about how this should work - do i want separate parameters
+        or a singular dictionary representing the whole parameter set?
+        using first explicitly and being able to unpack a payload seems like a
+        good idea at first glance. need to think about params that should be
+        included here.
+
+        Implementation considerations:
+
+        1) initial setting of stop loss from initial position - set at X% back
+        from putting on position or let it run before setting stop?
+
+        2) trailing threshold - when does this change? every time stop becomes
+        10% "out of the money"? seems reasonable
+
+        3) are there better ways to reach the same goal? obviously drag in
+        options/swaps/etc, but maybe some more convexity captured in move
+
+        4) When does stop loss create unintended drag vs a safety net? thinking
+        of situations where stopped out but immediate reversal. this could be
+        getting too cute with the implementation and getting too into the timing
+        aspect of things but think digging into this could be beneficial
+        '''
+        pass
 
 
 def breakout(df, st=50, lt=200):
@@ -151,9 +178,8 @@ class AwesomeOscillator(BaseStrategy):
         self._windows = windows
 
 
-
-
-    def generate_awesome_oscillator(self, df, window):
+    #utility functions
+    def generate_awesome_oscillator(self, df, window=34):
         '''
         Implementation of awesome oscillator for trend breakout/reversal
 
@@ -166,7 +192,12 @@ class AwesomeOscillator(BaseStrategy):
         =======
         pandas dataframe containing dataframe with oscillator values
         '''
+
+        #pretty basic implementation here
         df['med'] = (df['High'] + df['Low']) / 2
+
+        #know that generic awesome oscillator will use 34-day window but want
+        #to be able to play around with this. Ensemble of windows is interesting
         df[f'awesome_oscillator_{window}_window'] = df['med'].rolling(5).mean()\
                                             - df['med'].rolling(window).mean()
 
