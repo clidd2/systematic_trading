@@ -6,6 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def dollar_value(df, initial_amount=100):
     return (df['signal'].shift(1) * df['daily_returns']).cumsum().apply(np.exp)
 
