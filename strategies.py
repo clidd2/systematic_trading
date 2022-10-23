@@ -7,33 +7,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.base import BaseEstimator, TransformerMixin
-
-
-class ZScorer(BaseEstimator, TransformerMixin):
-    def __init__(self):
-        self._means = None
-        self._stds = None
-
-    def fit(self, X=None, y=None):
-        try:
-            X = X.to_numpy()
-            self._means = X.mean(axis=0, keepdims=True)
-            self._stds = X.std(axis=0, keepdims=True)
-            return self
-
-        except Exception as err:
-            print(f'Exception occurred fitting data: {err}')
-
-
-    def transform(self, X=None, y=None):
-        try:
-            X[:] = (X.to_numpy() - self._means) / self._stds
-            return X
-
-        except Exception as err:
-            print(f'Error occured transforming data: {err}')
-
 
 class BaseStrategy:
 
