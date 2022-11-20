@@ -118,11 +118,12 @@ def scoring_split(data: dict, splits=10, ranking_scores=[],
         raise ValueError(msg)
 
     pct_splits = [1 / split for split in range(1, splits + 1)]
-
+    print(pct_splits)
 
     for identifier, datapoint in data.items():
         #TODO: rank each datapoint in data dictionary based on input score
-        
+
+
         #can i use itemgetter here? maybe a list comp works
         pass
 
