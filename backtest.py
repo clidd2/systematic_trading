@@ -2,6 +2,9 @@
 import pandas as pd
 import numpy as np
 
+#custom transformer addins
+from sklearn.base import BaseEstimator, TransformerMixin
+
 #date handling
 import datetime as dt
 from dateutil.relativedelta import relativedelta
@@ -10,12 +13,51 @@ from dateutil.relativedelta import relativedelta
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-#xustom imports
+#custom imports
 from utils import get_data, ZScorer
 
 
-def dollar_value(df, initial_amount=100):
-    return (df['signal'].shift(1) * df['daily_returns']).cumsum().apply(np.exp)
+
+
+class DollarValue(BaseEstimator, TransformerMixin):
+    '''
+    generating dollar values of returns using a custom transformer w/ Scikit built in.
+    Ultimately would like to use this in a custom SKL pipeline/featureunion
+    '''
+
+    def __init__(self, initial_amount=100.0, returns_col=None):
+        '''
+        initializer for dollar value functions
+
+        params
+        ======
+        initial_amount (float): initial dollar amount to base analysis on
+        returns_col (str): columns of periodic pct returns in decimal format
+
+        returns
+        =======
+        no return
+        '''
+
+        self._initial_amount = initial_amount
+        self._returns_col = returns_col
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        if self._returns_col == None:
+            #if there is no returns column passed must catch and verify
+            raise ValueError('Returns not available, please specify a valid column.')
+        try:
+            return (X['signal'].shift(1) * X[self.returns_col]).cumsum().apply(np.exp)
+
+        except KeyError as kerr:
+            print(f'Error when generating final dollar value: {kerr})
+
+
+#def dollar_value(df, initial_amount=100):
+#    return (df['signal'].shift(1) * df['daily_returns']).cumsum().apply(np.exp)
 
 def plot_macd(df):
     buy_and_hold = df['price'].apply(np.log).diff(1).cumsum().apply(np.exp)
@@ -184,7 +226,6 @@ def aggregate_scoring(funcs=[], datas=[], param_list=[]) -> dict:
                 agg[id] = score
 
     return agg
-
 
 
 def main():

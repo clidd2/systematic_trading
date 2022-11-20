@@ -64,6 +64,12 @@ class BaseStrategy:
         pass
 
 
+    
+
+
+
+
+
 def breakout(df, st=50, lt=200):
     df['{}_dma'.format(st)] = df[r'price'].rolling(st).mean()
     df['{}_dma'.format(lt)] = df[r'price'].rolling(lt).mean()
