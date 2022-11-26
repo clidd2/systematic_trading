@@ -6,15 +6,13 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
 class ZScorer(BaseEstimator, TransformerMixin):
-    def __init__(self):
+    def __init__(self, cols=None):
         self._means = None
         self._stds = None
+        self._cols = cols
 
-    def fit(self, X=None, y=None):
+    def fit(self, X, y=None):
         try:
-            X = X.to_numpy()
-            self._means = X.mean(axis=0, keepdims=True)
-            self._stds = X.std(axis=0, keepdims=True)
             return self
 
         except Exception as err:
@@ -22,19 +20,21 @@ class ZScorer(BaseEstimator, TransformerMixin):
 
 
     def transform(self, X=None, y=None):
-        try:
-            X[:] = (X.to_numpy() - self._means) / self._stds
-            return X
+        for col in self._cols:
+            try:
+                col_arr = np.array(X[col])
+                X[f'{col}_z_score'] = (col_arr - col_arr.mean()) / col_arr.std()
 
-        except Exception as err:
-            print(f'Error occured transforming data: {err}')
+
+            except Exception as err:
+                print(f'Error occurred transforming {col} to Z-Score: {err}')
+
+        return X
 
 
 def get_data(ticker, start_date, end_date=dt.datetime.today(),
             colname='Adj Close'):
-    '''
 
-    '''
 
     try:
         #frame containing price data for given security in given date range
