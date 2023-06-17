@@ -5,6 +5,7 @@ import numpy as np
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
+
 class ZScorer(BaseEstimator, TransformerMixin):
     def __init__(self, cols=None):
         self._means = None

@@ -59,7 +59,7 @@ class RiskEngine(object):
                             testing
     lookback (int): lookback period from which to derive allocation/sizing
     '''
-    
+
     def __init__(self, notional_amount=100_000_000.00,
                 max_notional=100_000_000.00, max_exposure=1.0,
                 traded_markets=['CL=F','ES=F','CC=F','ZC=F','SB=F','NG=F'],
@@ -205,6 +205,9 @@ class RiskEngine(object):
         contract_exposure = 0
         for df, market in zip(market_data, markets):
             pass
+
+
+
 
 
 def main():

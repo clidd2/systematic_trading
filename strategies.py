@@ -2,7 +2,7 @@ import pandas as pd
 import datetime as dt
 from dateutil.relativedelta import relativedelta
 from backtest import dollar_value
-from utils import get_data
+from utils import get_data, ZScorer
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
@@ -64,10 +64,54 @@ class BaseStrategy:
         pass
 
 
-    
 
+class NaiveCounterTrend:
 
+    def __init__(self, df=None, cols=[], buy_z=-2.0, sell_z=2.0):
+        self._df = df
+        self._cols = cols
+        self._buy_z = buy_z
+        self._sell_z = sell_z
 
+    #getters
+    def get_df(self):
+        return self._df
+
+    def get_cols(self):
+        return self._cols
+
+    def get_buy_z(self):
+        return self._buy_z
+
+    def get_sell_z(self):
+        return self._sell_z
+
+    #setters
+    def set_df(self, df):
+        self._df = df
+
+    def set_cols(self, cols):
+        self._cols = cols
+
+    def set_buy_z(self, buy_z):
+        self._buy_z = buy_z
+
+    def set_sell_z(self, sell_z):
+        self._sell_z = sell_z
+
+    #worker functions
+    def generate_signals(self):
+        z_scaled_df = ZScorer.transform(self.get_df())
+
+        for col in self.get_cols():
+            #buy when below 2 deviations from mean and sell when above 2 deviations from mean
+
+            #super simple, doing this for baseline testing
+            z_scaled_df[f'{col}_long_signal'] = np.where(z_scaled_df[col] < self.get_buy_z(),1,0)
+            z_scaled_df[f'{col}_short_signal'] = np.where(z_scaled_df[col] > self.get_sell_z(),1,0)
+
+        print(z_scaled_df)
+        return z_scaled_df
 
 
 def breakout(df, st=50, lt=200):
@@ -307,7 +351,7 @@ class AwesomeOscillator(BaseStrategy):
         plt.show()
 
 
-
+class
 
 
 def main():
@@ -327,10 +371,13 @@ def main():
     #macd_df = macd_strat(df)
     #macd_stats = implement_macd(macd_df, macd_strat)
     #print(macd_stats)
-    windows = [15, 25, 45]
-    awesome = AwesomeOscillator(dfs=[df], windows=windows)
-    awesome.run_strategy()
-    awesome.plot_strategy()
+    #windows = [15, 25, 45]
+    #awesome = AwesomeOscillator(dfs=[df], windows=windows)
+    #awesome.run_strategy()
+    #awesome.plot_strategy()
+
+    countertrend = NaiveCounterTrend(df, cols=['Adj Close'])
+    countertrend.generate_signals()
 
 if __name__ == '__main__':
     main()
